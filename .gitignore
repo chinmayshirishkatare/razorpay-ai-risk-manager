@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Model artifacts (regenerate with train_model.py)
+backend/models/*.pkl
+backend/data/*.csv
+
+# OS / Editor
+.DS_Store
+.vscode/
+*.swp
+
+# Env files
+.env

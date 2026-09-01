@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Risk Manager · Fraud Control Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0F17;
+    --panel: #121826;
+    --panel-raised: #171F30;
+    --line: #232D42;
+    --text: #E4E9F2;
+    --text-dim: #8892A6;
+    --signal-low: #35C88A;
+    --signal-med: #E8B84B;
+    --signal-high: #F0803C;
+    --signal-critical: #E5484D;
+    --accent: #4C9EEB;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), #2E6FB0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 15px;
+    color: #061018;
+  }
+
+  .brand h1 {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .brand p {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-dim);
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--signal-low);
+    box-shadow: 0 0 8px var(--signal-low);
+  }
+  .dot.offline { background: var(--signal-critical); box-shadow: 0 0 8px var(--signal-critical); }
+
+  /* ---------- Stats row ---------- */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+
+  .stat-card .label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    margin-bottom: 6px;
+  }
+
+  .stat-card .value {
+    font-size: 26px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+
+  /* ---------- Main grid ---------- */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 880px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .panel h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .panel .sub {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+
+  /* ---------- Form ---------- */
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+  }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .toggle {
+    flex: 1;
+    text-align: center;
+    padding: 9px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    cursor: pointer;
+    color: var(--text-dim);
+    background: var(--panel-raised);
+    transition: all 0.15s;
+  }
+
+  .toggle.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(76, 158, 235, 0.08);
+  }
+
+  button.submit {
+    width: 100%;
+    margin-top: 8px;
+    padding: 13px;
+    background: var(--accent);
+    color: #061018;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  button.submit:hover { opacity: 0.88; }
+  button.submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ---------- Result panel ---------- */
+  .result-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    height: 100%;
+  }
+
+  .gauge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+
+  .risk-badge {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+
+  .risk-badge.LOW { background: rgba(53,200,138,0.15); color: var(--signal-low); }
+  .risk-badge.MEDIUM { background: rgba(232,184,75,0.15); color: var(--signal-med); }
+  .risk-badge.HIGH { background: rgba(240,128,60,0.15); color: var(--signal-high); }
+  .risk-badge.CRITICAL { background: rgba(229,72,77,0.15); color: var(--signal-critical); }
+
+  .score-big {
+    font-family: var(--font-mono);
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .score-sub { font-size: 12px; color: var(--text-dim); font-family: var(--font-mono); }
+
+  .action-box {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .factors-list {
+    list-style: none;
+  }
+
+  .factors-list li {
+    font-size: 13px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+  }
+  .factors-list li:last-child { border-bottom: none; }
+  .factors-list li::before {
+    content: '·';
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ---------- Transactions table ---------- */
+  .txn-panel {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 500;
+  }
+
+  td {
+    padding: 10px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .risk-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 7px;
+  }
+  .risk-dot.LOW { background: var(--signal-low); }
+  .risk-dot.MEDIUM { background: var(--signal-med); }
+  .risk-dot.HIGH { background: var(--signal-high); }
+  .risk-dot.CRITICAL { background: var(--signal-critical); }
+
+  .empty-row td {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 30px;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark">AI</div>
+      <div>
+        <h1>AI Risk Manager</h1>
+        <p>fraud &amp; transaction risk control room</p>
+      </div>
+    </div>
+    <div class="status-pill">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">checking API...</span>
+    </div>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="label">TRANSACTIONS SCORED</div>
+      <div class="value" id="statTotal">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">FLAGGED AS FRAUD</div>
+      <div class="value" id="statFlagged">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">FRAUD RATE</div>
+      <div class="value" id="statRate">0%</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">AVG RISK SCORE</div>
+      <div class="value" id="statAvg">0</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Form -->
+    <div class="panel">
+      <h2>Evaluate a transaction</h2>
+      <div class="sub">Enter transaction details to get a real-time risk assessment</div>
+
+      <form id="txnForm">
+        <div class="row-2">
+          <div class="field">
+            <label>Amount (INR)</label>
+            <input type="number" id="amount" value="15000" min="1" step="1" required>
+          </div>
+          <div class="field">
+            <label>Hour of day (0-23)</label>
+            <input type="number" id="transaction_hour" value="14" min="0" max="23" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Merchant category</label>
+          <select id="merchant_category">
+            <option value="electronics">Electronics</option>
+            <option value="grocery">Grocery</option>
+            <option value="travel">Travel</option>
+            <option value="fashion">Fashion</option>
+            <option value="food_delivery">Food delivery</option>
+            <option value="utilities">Utilities</option>
+            <option value="gaming">Gaming</option>
+            <option value="crypto_exchange">Crypto exchange</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>International transaction?</label>
+          <div class="toggle-row">
+            <div class="toggle active" data-field="is_international" data-value="false">No</div>
+            <div class="toggle" data-field="is_international" data-value="true">Yes</div>
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label>Account age (days)</label>
+            <input type="number" id="account_age_days" value="400" min="0" required>
+          </div>
+          <div class="field">
+            <label>Txns in last hour</label>
+            <input type="number" id="num_txns_last_hour" value="1" min="0" required>
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label>Distance from home (km)</label>
+            <input type="number" id="distance_from_home_km" value="5" min="0" step="0.1" required>
+          </div>
+          <div class="field">
+            <label>Failed attempts (24h)</label>
+            <input type="number" id="failed_attempts_last_24h" value="0" min="0" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Device trust score (0.00 - 1.00)</label>
+          <input type="number" id="device_trust_score" value="0.85" min="0" max="1" step="0.01" required>
+        </div>
+
+        <div class="field">
+          <label>Previously flagged for fraud?</label>
+          <div class="toggle-row">
+            <div class="toggle active" data-field="previous_fraud_flag" data-value="false">No</div>
+            <div class="toggle" data-field="previous_fraud_flag" data-value="true">Yes</div>
+          </div>
+        </div>
+
+        <button type="submit" class="submit" id="submitBtn">Assess risk</button>
+      </form>
+    </div>
+
+    <!-- Result -->
+    <div class="panel" id="resultPanel">
+      <h2>Risk assessment</h2>
+      <div class="sub">Model output appears here after evaluation</div>
+      <div class="result-empty" id="resultEmpty">
+        Fill in the form and click "Assess risk"<br>to see the fraud probability and risk breakdown.
+      </div>
+      <div id="resultContent" style="display:none;">
+        <div class="gauge-wrap">
+          <div>
+            <div class="score-big" id="scoreBig">0</div>
+            <div class="score-sub">risk score / 100</div>
+          </div>
+          <span class="risk-badge" id="riskBadge">LOW</span>
+        </div>
+        <div class="action-box" id="actionBox"></div>
+        <div class="sub" style="margin-bottom:8px;">Contributing factors</div>
+        <ul class="factors-list" id="factorsList"></ul>
+      </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="panel txn-panel">
+      <h2>Recent evaluations</h2>
+      <div class="sub">Last transactions scored in this session</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Amount</th>
+            <th>Merchant</th>
+            <th>Risk</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="txnBody">
+          <tr class="empty-row"><td colspan="5">No transactions evaluated yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:8000";
+
+  // ---- toggle buttons (Yes/No fields) ----
+  document.querySelectorAll('.toggle-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('toggle')) return;
+      [...row.children].forEach(c => c.classList.remove('active'));
+      e.target.classList.add('active');
+    });
+  });
+
+  function getToggleValue(fieldName) {
+    const active = document.querySelector(`.toggle[data-field="${fieldName}"].active`);
+    return active.dataset.value === 'true';
+  }
+
+  // ---- health check ----
+  async function checkHealth() {
+    try {
+      const res = await fetch(`${API_BASE}/health`);
+      const data = await res.json();
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      if (data.status === 'healthy') {
+        dot.classList.remove('offline');
+        text.textContent = 'API connected · model loaded';
+      } else {
+        dot.classList.add('offline');
+        text.textContent = 'Model not trained yet';
+      }
+    } catch (err) {
+      document.getElementById('statusDot').classList.add('offline');
+      document.getElementById('statusText').textContent = 'API offline';
+    }
+  }
+
+  // ---- stats ----
+  async function refreshStats() {
+    try {
+      const res = await fetch(`${API_BASE}/api/stats`);
+      const data = await res.json();
+      document.getElementById('statTotal').textContent = data.total_transactions_evaluated;
+      document.getElementById('statFlagged').textContent = data.flagged_as_fraud;
+      document.getElementById('statRate').textContent = data.fraud_rate_percent + '%';
+      document.getElementById('statAvg').textContent = data.average_risk_score;
+    } catch (err) { /* API offline, ignore */ }
+  }
+
+  // ---- recent transactions ----
+  async function refreshRecent() {
+    try {
+      const res = await fetch(`${API_BASE}/api/recent-transactions`);
+      const data = await res.json();
+      const tbody = document.getElementById('txnBody');
+      if (!data.transactions.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No transactions evaluated yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.transactions.map(t => {
+        const time = new Date(t.timestamp).toLocaleTimeString();
+        return `<tr>
+          <td>${time}</td>
+          <td>₹${Number(t.amount).toLocaleString('en-IN')}</td>
+          <td>${t.merchant_category.replace('_',' ')}</td>
+          <td><span class="risk-dot ${t.risk_level}"></span>${t.risk_level}</td>
+          <td>${t.risk_score}</td>
+        </tr>`;
+      }).join('');
+    } catch (err) { /* API offline, ignore */ }
+  }
+
+  // ---- form submit ----
+  document.getElementById('txnForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Evaluating...';
+
+    const payload = {
+      amount: parseFloat(document.getElementById('amount').value),
+      transaction_hour: parseInt(document.getElementById('transaction_hour').value),
+      is_international: getToggleValue('is_international'),
+      merchant_category: document.getElementById('merchant_category').value,
+      account_age_days: parseInt(document.getElementById('account_age_days').value),
+      num_txns_last_hour: parseInt(document.getElementById('num_txns_last_hour').value),
+      distance_from_home_km: parseFloat(document.getElementById('distance_from_home_km').value),
+      previous_fraud_flag: getToggleValue('previous_fraud_flag'),
+      failed_attempts_last_24h: parseInt(document.getElementById('failed_attempts_last_24h').value),
+      device_trust_score: parseFloat(document.getElementById('device_trust_score').value),
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/api/assess-risk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error('Request failed');
+      const result = await res.json();
+
+      document.getElementById('resultEmpty').style.display = 'none';
+      document.getElementById('resultContent').style.display = 'block';
+      document.getElementById('scoreBig').textContent = result.risk_score;
+      const badge = document.getElementById('riskBadge');
+      badge.textContent = result.risk_level;
+      badge.className = 'risk-badge ' + result.risk_level;
+      document.getElementById('actionBox').textContent = result.recommended_action;
+      document.getElementById('factorsList').innerHTML =
+        result.contributing_factors.map(f => `<li>${f}</li>`).join('');
+
+      refreshStats();
+      refreshRecent();
+    } catch (err) {
+      alert('Could not reach the API. Make sure the backend server is running on port 8000.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Assess risk';
+    }
+  });
+
+  checkHealth();
+  refreshStats();
+  refreshRecent();
+  setInterval(checkHealth, 8000);
+</script>
+
+</body>
+</html>
